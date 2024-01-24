@@ -1,18 +1,17 @@
-from datetime import datetime, date
+from datetime import datetime
+import time
 import configparser
 import json
 
 import adlfs
 from faker import Faker
 import pandas as pd
-import random
 
 config = configparser.ConfigParser()
 
-
 config.read('config.ini')
 
-CONTAINER =  config["azure"]["azure_storage_container_name"]
+CONTAINER =  'databricks'
 STORAGE_ACCOUNT_NAME = config["azure"]["azure_storage_account_name"]
 STORAGE_ACCOUNT_KEY = config["azure"]["azure_storage_account_key"] 
 
@@ -41,38 +40,6 @@ def create_records_customers(number: int):
     update_last_id(i+1,"last_id_customer")
     return records
 
-def create_records_sales(number:int):
-    fake = Faker()
-    records = []
-    last_ids = get_last_id()
-    last_id = last_ids["last_id_sales"]
-    for i in range(last_id, last_id + number):
-        first_name = fake.first_name()
-        last_name = fake.last_name()
-        product_name = fake.word().capitalize()
-        quantity = random.randint(1, 10)
-        unit_price = round(random.uniform(10, 100), 2)
-        # unit_price = -1
-        total_price = quantity * unit_price
-        _date = fake.date_between_dates(date(2020,1,1), date.today())
-        _id = i
-
-        record = {
-            'ID': _id,
-            'FirstName': first_name,
-            'LastName': last_name,
-            'ProductName': product_name,
-            'Quantity': quantity,
-            'UnitPrice': unit_price,
-            'TotalPrice': total_price,
-            'TransactionDate': _date
-        }
-        records.append(record)
-    update_last_id(i+1,"last_id_sales")
-
-    return records
-
-
 
 def load_customer_records(data: list)->None:
     columns = ['id', 'first_name', 'last_name', 'email', 'city']
@@ -84,30 +51,20 @@ def load_customer_records(data: list)->None:
         account_name=STORAGE_ACCOUNT_NAME,
         account_key=STORAGE_ACCOUNT_KEY,
     )
-
     # Save the CSV file to ADLS
     with fs.open(f"{CONTAINER}/{'customers'}/{timestamp_string}-customers.csv", "wb") as f:
         df.to_csv(f, index=False)
 
-def load_sales_records(data: list)->None:
-    df = pd.DataFrame(data)
-    utc_now = datetime.utcnow()
-    timestamp_string = utc_now.strftime("%Y%m%d_%H%M%S")
 
-    fs = adlfs.AzureBlobFileSystem(
-        account_name=STORAGE_ACCOUNT_NAME,
-        account_key=STORAGE_ACCOUNT_KEY,
-    )
+r = create_records_customers(20)
+load_customer_records(r)
 
-    # Save the CSV file to ADLS
-    with fs.open(f"{CONTAINER}/{'sales'}/{timestamp_string}-sales.csv", "wb") as f:
-        df.to_csv(f, index=False)
-
-
-if __name__ == "__main__":
-
-    pass
-
+for i in range(10):
+    r = create_records_customers(20)
+    load_customer_records(r)
+    print("creating records ...")
+    time.sleep(15)
+    
 
 
 

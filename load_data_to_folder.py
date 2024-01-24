@@ -73,7 +73,6 @@ def create_records_sales(number:int):
     return records
 
 
-
 def load_customer_records(data: list)->None:
     columns = ['id', 'first_name', 'last_name', 'email', 'city']
     df = pd.DataFrame(data, columns=columns)
@@ -86,7 +85,7 @@ def load_customer_records(data: list)->None:
     )
 
     # Save the CSV file to ADLS
-    with fs.open(f"{CONTAINER}/{'customers'}/{timestamp_string}-customers.csv", "wb") as f:
+    with fs.open(f"{CONTAINER}/{'arriving_files'}/{timestamp_string}-customers.csv", "wb") as f:
         df.to_csv(f, index=False)
 
 def load_sales_records(data: list)->None:
@@ -100,16 +99,16 @@ def load_sales_records(data: list)->None:
     )
 
     # Save the CSV file to ADLS
-    with fs.open(f"{CONTAINER}/{'sales'}/{timestamp_string}-sales.csv", "wb") as f:
+    with fs.open(f"{CONTAINER}/{'arriving_files'}/{timestamp_string}-sales.csv", "wb") as f:
         df.to_csv(f, index=False)
 
 
-if __name__ == "__main__":
-
-    pass
 
 
+for _ in range(20):
+    r = create_records_sales(20)
 
+    load_sales_records(r)
 
 
 
